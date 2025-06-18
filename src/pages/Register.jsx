@@ -1,10 +1,13 @@
-import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../provider/AuthProvider';
 
 const Register = () => {
 
-    const { createNewUser, setUser } = useContext(AuthContext)
+    const { createNewUser, setUser, updateUserProfile } = useContext(AuthContext)
+    const [error, setError] = useState([])
+    const navigate =useNavigate()
+
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -14,21 +17,30 @@ const Register = () => {
         // const password = e.target.password.value
         const form = new FormData(e.target)
         const name = form.get('name')
+        if (name.length < 5) {
+            setError({ ...error, name: 'must be more than 5 character' })
+            return
+        }
         const photo = form.get('photo')
         const email = form.get('email')
         const password = form.get('password')
-        // console.log({name,photo,email,password})
+        // console.log({name,photo,email,password})     
 
         createNewUser(email, password)
             .then(res => {
                 const user = res.user
                 // console.log(user)
                 setUser(user)
+                updateUserProfile({displayName:name, photoURL:photo})
+                .then(()=>{
+                    navigate('/')
+                })
+                .catch(err=>console.log(err))
             })
             .catch(error => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                console.log(errorCode, errorMessage)
+                // console.log(errorCode, errorMessage)
             })
 
     }
@@ -44,6 +56,11 @@ const Register = () => {
                                 <span className="label-text">Your Name</span>
                             </label>
                             <input name='name' type="text" placeholder="Enter your name" className="input input-bordered" required />
+                            {
+                                error?.name && <label className='label text-sm text-red-400'>
+                                    {error.name}
+                                </label>
+                            }
                         </div>
                         <div className="form-control">
                             <label className="label">
